@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: trainercentral-hub
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SCHEDULER_INTERVAL_SECONDS
+        value: "3600"
+      - key: TARGET_EMAIL
+        value: "shaliniscr@gmail.com"
