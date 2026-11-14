@@ -26,18 +26,16 @@ load_dotenv()
 DEFAULT_API_BASE_URL = "https://trainer-central-assigments-api.onrender.com"
 DEFAULT_TARGET_EMAIL = "shaliniscr@gmail.com"
 
-# Model configuration: Map colloquial references like "sonnet 5.5" to Claude 3.5 Sonnet
+# Model configuration: Map colloquial references like "sonnet 5.5" to claude-sonnet-5-5
 MODEL_ALIASES = {
-    "sonnet 5.5": "claude-3-5-sonnet-20241022",
-    "sonnet-5.5": "claude-3-5-sonnet-20241022",
-    "sonnet5.5": "claude-3-5-sonnet-20241022",
-    "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
-    "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
-    "sonnet-3.5": "claude-3-5-sonnet-20241022",
-    "sonnet": "claude-3-5-sonnet-20241022",
-    "latest": "claude-3-5-sonnet-latest",
+    "sonnet 5.5": "claude-sonnet-5-5",
+    "sonnet-5.5": "claude-sonnet-5-5",
+    "sonnet5.5": "claude-sonnet-5-5",
+    "claude-sonnet-5-5": "claude-sonnet-5-5",
+    "claude-sonnet-5.5": "claude-sonnet-5-5",
+    "sonnet": "claude-sonnet-5-5",
 }
-DEFAULT_MODEL = "claude-3-5-sonnet-20241022"
+DEFAULT_MODEL = "claude-sonnet-5-5"
 
 
 def resolve_model_name(model_input: str) -> str:
@@ -199,7 +197,7 @@ def main():
         "--model",
         type=str,
         default="sonnet 5.5",
-        help="Anthropic model name or alias (default: 'sonnet 5.5' -> claude-3-5-sonnet-20241022)",
+        help="Anthropic model name or alias (default: 'sonnet 5.5' -> claude-sonnet-5-5)",
     )
     parser.add_argument(
         "--api-url",

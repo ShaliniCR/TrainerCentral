@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrainerCentral Hub & Assistant</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="logo-icon">🎯</div>
+      <div class="brand-info">
+        <h1>TrainerCentral Hub</h1>
+        <span class="badge model-badge">Claude Sonnet 5.5</span>
+      </div>
+    </div>
+
+    <!-- Live Scheduler Control Pill -->
+    <div class="scheduler-pill" id="schedulerPill">
+      <div class="status-dot active" id="schedulerDot"></div>
+      <span class="scheduler-label" id="schedulerStatusText">Hourly Sync: Active</span>
+      <span class="countdown-tag" id="countdownTag">Next in: --:--</span>
+      <button class="btn btn-pill-action" id="headerTriggerBtn" title="Trigger assignment sync immediately">
+        ⚡ Run Now
+      </button>
+      <button class="btn btn-pill-toggle" id="headerToggleBtn" title="Pause/Resume Hourly Scheduler">
+        ⏸
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-layout">
+    <!-- Chat Section (Left / Center) -->
+    <section class="chat-pane">
+      <div class="pane-header">
+        <div class="pane-title">
+          <span class="icon">💬</span>
+          <h2>AI Assignment Assistant</h2>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="clearChatBtn" title="Clear conversation">
+          Clear Chat
+        </button>
+      </div>
+
+      <!-- Quick Action Prompt Chips -->
+      <div class="quick-chips">
+        <button class="chip" data-prompt="Run the assignment processing job now and submit entries to the API.">
+          ⚡ Run Sync Now
+        </button>
+        <button class="chip" data-prompt="Analyze the text files in the directory and find which one belongs to shaliniscr@gmail.com.">
+          🔍 Analyze shaliniscr@gmail.com
+        </button>
+        <button class="chip" data-prompt="List all text files in the directory and summarize their contents.">
+          📁 Inspect Local Files
+        </button>
+        <button class="chip" data-prompt="What is the current status of the hourly scheduler and when does it run next?">
+          🕒 Scheduler Status
+        </button>
+      </div>
+
+      <!-- Messages Thread -->
+      <div class="messages-container" id="messagesContainer">
+        <div class="message assistant-msg">
+          <div class="avatar">🤖</div>
+          <div class="bubble">
+            <p><strong>Hello! I am your TrainerCentral Assignment Assistant.</strong></p>
+            <p>I monitor the local assignment text files, run an automatic <strong>1-hour sync</strong> to the TrainerCentral API, and can analyze or submit files on demand.</p>
+            <p>Ask me anything or click one of the quick actions above to get started!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Input Form -->
+      <div class="chat-input-wrapper">
+        <form id="chatForm" class="chat-form">
+          <textarea
+            id="chatInput"
+            placeholder="Ask Claude Sonnet 5.5 (e.g., 'Check files for shaliniscr@gmail.com' or 'Run sync now')..."
+            rows="1"
+            required
+          ></textarea>
+          <button type="submit" class="btn btn-primary btn-send" id="sendBtn" title="Send Message">
+            <span class="send-icon">➤</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Side Panel: Scheduler & Workspace Status (Right) -->
+    <aside class="sidebar-pane">
+      <!-- Scheduler Status Card -->
+      <div class="card status-card">
+        <div class="card-header">
+          <span class="card-title">🕒 Scheduler Details</span>
+          <span class="badge" id="schedBadge">1h Interval</span>
+        </div>
+        <div class="card-body">
+          <div class="metric-row">
+            <span class="metric-label">Status:</span>
+            <span class="metric-value font-bold" id="schedStatusVal">Active</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Next Scheduled Run:</span>
+            <span class="metric-value" id="nextRunVal">--:--</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Last Execution:</span>
+            <span class="metric-value" id="lastRunVal">Never</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Executions:</span>
+            <span class="metric-value" id="runCountVal">0</span>
+          </div>
+          <button class="btn btn-accent btn-block mt-3" id="sideTriggerBtn">
+            ⚡ Trigger Assignment Sync Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Workspace Files Card -->
+      <div class="card files-card">
+        <div class="card-header">
+          <span class="card-title">📁 Monitored Files</span>
+          <button class="btn-refresh" id="refreshFilesBtn" title="Refresh file list">↻</button>
+        </div>
+        <div class="card-body p-0">
+          <ul class="file-list" id="fileList">
+            <li class="loading-item">Loading files...</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Live API Submissions Card -->
+      <div class="card submissions-card">
+        <div class="card-header">
+          <span class="card-title">🌐 Live API Entries</span>
+          <button class="btn-refresh" id="refreshEntriesBtn" title="Refresh API entries">↻</button>
+        </div>
+        <div class="card-body p-0">
+          <ul class="entry-list" id="entryList">
+            <li class="loading-item">Fetching remote entries...</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Recent Run Logs Card -->
+      <div class="card logs-card">
+        <div class="card-header">
+          <span class="card-title">📜 Scheduler Logs</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="log-stream" id="logStream">
+            <div class="log-entry">Waiting for scheduler events...</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
