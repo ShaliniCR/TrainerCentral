@@ -28,7 +28,35 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+import os
+import sys
+import time
+import json
+import logging
+import threading
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+
+import requests
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from pydantic import BaseModel
+
 import anthropic
+
+# Configure directory paths
+BACKEND_DIR = Path(__file__).parent.resolve()
+ROOT_DIR = BACKEND_DIR.parent.resolve()
+FRONTEND_DIR = ROOT_DIR / "frontend"
+WORKSPACE_DIR = ROOT_DIR
+
+# Ensure backend directory is in Python path for clean imports
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
 # Import core assignment processing logic
 from process_assignments import (
@@ -43,8 +71,9 @@ from process_assignments import (
     DEFAULT_MODEL,
 )
 
-# Load environment
-load_dotenv()
+# Load environment from root .env or backend .env
+load_dotenv(dotenv_path=ROOT_DIR / ".env")
+load_dotenv(dotenv_path=BACKEND_DIR / ".env")
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -60,10 +89,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-WORKSPACE_DIR = Path(__file__).parent.resolve()
-STATIC_DIR = WORKSPACE_DIR / "static"
-STATIC_DIR.mkdir(exist_ok=True)
 
 SCHEDULER_INTERVAL_SECONDS = int(os.environ.get("SCHEDULER_INTERVAL_SECONDS", 3600))  # 1 Hour
 
@@ -405,17 +430,30 @@ Answer user questions clearly, formatting responses with markdown, bullet points
 
 
 # ---------------------------------------------------------------------------
-# Serve Static Frontend
+# Serve Frontend Files
 # ---------------------------------------------------------------------------
 @app.get("/")
 def serve_index():
-    index_path = STATIC_DIR / "index.html"
+    index_path = FRONTEND_DIR / "index.html"
     if index_path.exists():
         return FileResponse(index_path)
     return HTMLResponse("<h1>TrainerCentral Backend is running. Frontend loading...</h1>")
 
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+# Support /frontend and /static URLs
+if FRONTEND_DIR.exists():
+    app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+
+
+@app.get("/{file_name:path}")
+def serve_frontend_assets(file_name: str):
+    """Serve any direct asset like style.css, app.js if requested at root."""
+    asset_path = FRONTEND_DIR / file_name
+    if asset_path.exists() and asset_path.is_file():
+        return FileResponse(asset_path)
+    raise HTTPException(status_code=404, detail="Resource not found")
+
 
 if __name__ == "__main__":
     import uvicorn
@@ -424,5 +462,7 @@ if __name__ == "__main__":
     print(f"🚀 TrainerCentral Server & Scheduler starting...")
     print(f"📡 Web & Chat UI:  http://localhost:{port}")
     print(f"🕒 Hourly Sync:    Running every {SCHEDULER_INTERVAL_SECONDS} seconds")
+    print(f"📂 Frontend Dir:   {FRONTEND_DIR}")
+    print(f"📂 Backend Dir:    {BACKEND_DIR}")
     print(f"=======================================================\n")
     uvicorn.run("app:app", host="0.0.0.0", port=port, reload=False)

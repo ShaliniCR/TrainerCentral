@@ -20,8 +20,9 @@ from typing import List, Dict, Any, Optional
 import requests
 from dotenv import load_dotenv
 
-# Load environment variables from .env if present
+# Load environment variables from .env (current or parent directory)
 load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 DEFAULT_API_BASE_URL = "https://trainer-central-assigments-api.onrender.com"
 DEFAULT_TARGET_EMAIL = "shaliniscr@gmail.com"
@@ -45,8 +46,11 @@ def resolve_model_name(model_input: str) -> str:
 
 
 def find_txt_files(directory: Path) -> List[Path]:
-    """Find all .txt files in the given directory."""
-    return sorted(list(directory.glob("*.txt")))
+    """Find all .txt files in the given directory (or parent directory if run from subfolder)."""
+    files = sorted(list(directory.glob("*.txt")))
+    if not files and directory.parent.exists():
+        files = sorted(list(directory.parent.glob("*.txt")))
+    return files
 
 
 def load_file_contents(file_paths: List[Path]) -> Dict[str, str]:
